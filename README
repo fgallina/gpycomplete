@@ -1,0 +1,92 @@
+This package contains gpycomplete.
+
+1. Introduction
+
+   gpycomplete is a python code autocompletion and helper suite for
+   GNU/Emacs. It feels like having ipython in your buffer.
+
+   gpycomplete is written from scratch by Fabián E. Gallina, althought
+   some funcions (namely get_help and get_signature) are strongly
+   inspired in the original pycomplete package that was available at
+   http://python-mode.sf.net.
+
+   The main feature of gpycomplete is that the completions it returns
+   are actually what the python interpreter running in the background
+   has available in its context. This is what makes gpycomplete so
+   powerful and what it gives the feel of Ipython.
+
+
+2. Requirements
+
+   To use gpycomplete you must have Pymacs. The recommended version is
+   the latest stable release 0.23 (since this package was sucessfully
+   tested with that version). If you run this package with a different
+   version please let me know at:
+   fgallina --at-- caffeinegroup --dot-- com --dot-- ar
+
+   You can download Pymacs 0.23 from:
+   http://pymacs.progiciels-bpi.ca/archives/Pymacs-0.23.tar.gz
+
+
+3. Installation
+
+   To install gpycomplete just put gpycomplete.el in a directory which
+   is included in your Emacs load-path and put gpycomplete.py in some
+   folder included in your python path (normally /usr/lib/python2.5/
+   is OK)
+
+   After putting the files in their appropiate directories just add
+   the following to your ~/.emacs file:
+
+   (require 'gpycomplete)
+
+   Restart Emacs or use load-file ~/.emacs.
+
+
+4. Usage
+
+   gpycomplete binds the following keystrokes:
+
+   [tab] : Tries to get the completions of the current expression, if
+   	   only one completion is available then it inserts it in hte buffer
+   	   else if no completions are available indents.
+
+   [(] : inserts a "(" and displays the signature of the current
+         expression.
+
+   [,] : inserts a "," and displays the signature of the current
+         expression.
+
+   [f1] : prints the help string of the current expression.
+
+   [f2] : prompts the user for the object he wants to get the
+   	  signature and displays it.
+
+   [f3] : prompts the user for the object he wants to get the help
+   	  string and displays it.
+
+   [.] : refreshes context to the interpreter and inserts a ".".
+
+   [return] : refreshes the context to the interpreter and inserts a
+   	      newline.
+
+   gpycomplete provides the following interactive commands:
+
+   gpy-add-path, gpy-check-errors, gpy-complete-and-indent,
+   gpy-electric-comma, gpy-electric-lparen, gpy-help,
+   gpy-help-at-point, gpy-refresh-and-dot, gpy-refresh-and-newline,
+   gpy-refresh-context, gpy-set-django-project, gpy-signature
+
+   Besides the names are almost self-explanatory you can get the
+   documentation of them by using C-h f <name of the function>
+
+
+5. Bug Reports
+
+   If you find a bug please report it to:
+   fgallina --at-- caffeinegroup --dot-- com --dot-- ar
+
+6. License
+
+   gpycomplete is free software under the GPL v3, see LICENSE file for
+   details.
