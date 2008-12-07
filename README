@@ -48,27 +48,27 @@ This package contains gpycomplete.
    gpycomplete binds the following keystrokes:
 
    [tab] : Tries to get the completions of the current expression, if
-   	   only one completion is available then it inserts it in hte buffer
-   	   else if no completions are available indents.
+   only one completion is available then it inserts it in the buffer
+   else if no completions are available indents.
 
    [(] : inserts a "(" and displays the signature of the current
-         expression.
+   expression.
 
    [,] : inserts a "," and displays the signature of the current
-         expression.
+   expression.
 
    [f1] : prints the help string of the current expression.
 
    [f2] : prompts the user for the object he wants to get the
-   	  signature and displays it.
+   signature and displays it.
 
    [f3] : prompts the user for the object he wants to get the help
-   	  string and displays it.
+   string and displays it.
 
    [.] : refreshes context to the interpreter and inserts a ".".
 
    [return] : refreshes the context to the interpreter and inserts a
-   	      newline.
+   newline.
 
    gpycomplete provides the following interactive commands:
 
@@ -78,13 +78,15 @@ This package contains gpycomplete.
    gpy-refresh-context, gpy-set-django-project, gpy-signature
 
    Besides the names are almost self-explanatory you can get the
-   documentation of them by using C-h f <name of the function>
+   documentation of them by using C-h f <name of the function> within
+   Emacs
 
 
 5. Bug Reports
 
    If you find a bug please report it to:
    fgallina --at-- caffeinegroup --dot-- com --dot-- ar
+
 
 6. License
 
