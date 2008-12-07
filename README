@@ -13,7 +13,7 @@ This package contains gpycomplete.
    The main feature of gpycomplete is that the completions it returns
    are actually what the python interpreter running in the background
    has available in its context. This is what makes gpycomplete so
-   powerful and what it gives the feel of Ipython.
+   powerful and what it gives the feel of ipython.
 
 
 2. Requirements
