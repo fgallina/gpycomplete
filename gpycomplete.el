@@ -1,0 +1,207 @@
+;; This file is part of gpycomplete.
+
+;; gpycomplete is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; gpycomplete is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with gpycomplete.  If not, see <http://www.gnu.org/licenses/>.
+
+;; gpycomplete.el is written from scratch by Fabian Ezequiel Gallina
+;; <fgallina@caffeinegroup.com.ar> but it is somehow based on the original
+;; pycomplete package from the http://python-mode.sf.net.
+
+;; gpycomplete allows inline completion and help for the python programing language
+;; within emacs
+
+;;; Complete symbols at point using Pymacs.
+;;; See pycomplete.py for the Python side of things and a short description
+;;; of what to expect.
+
+(require 'pymacs)
+(require 'python-mode)
+
+(pymacs-load "gpycomplete")
+
+(defun gpy-get-code ()
+  "Gets all the code written in the current buffer"
+  (buffer-substring (point-min) (point-max)))
+
+(defun gpy-get-current-expression ()
+  "Gets the current expression to complete"
+  (save-restriction
+    (save-excursion
+      (beginning-of-line)
+      (push-mark nil t)
+      (end-of-line)
+      (narrow-to-region (mark) (point)))
+    (save-excursion
+      (if (search-backward " " nil t)
+	  (forward-char)
+	(beginning-of-line))
+      (push-mark nil t)
+      (setq gpylbound (mark)))
+    (buffer-substring gpylbound (point))))
+
+
+(defun gpy-show (string)
+  "Shows string in the *gpycomplete* buffer"
+  (display-message-or-buffer string "*gpycomplete*"))
+
+
+(defun gpy-refresh-context ()
+  "Refreshes the python interpreter with the code of the buffer"
+  (interactive)
+  (gpycomplete-refresh-context (gpy-get-code)))
+
+
+(defun gpy-check-errors ()
+  "Checks if the current code of the buffer contains errors and
+displays the result"
+  (interactive)
+  (gpy-show
+   (gpycomplete-refresh-context (gpy-get-code))))
+
+
+(defun gpy-complete ()
+  "Returns all the available completions for the previous expression"
+  (gpycomplete-complete (gpy-get-current-expression) (gpy-get-code)))
+
+
+(defun gpy-electric-lparen ()
+  "Displays the signature of the previous expresion when a left
+paren is typed and inserts ("
+  (interactive)
+  (gpy-show
+   (gpycomplete-get-signature (gpy-get-current-expression)))
+  (insert "("))
+
+
+(defun gpy-electric-comma ()
+  "Displays the signature of the previous expresion when a comma
+is typed and inserts ,"
+  (interactive)
+  (gpy-show
+   (gpycomplete-get-signature (gpy-get-current-expression)))
+  (insert ","))
+
+
+(defun gpy-help-at-point ()
+  "Displays the help string of the previous expression"
+  (interactive)
+  (gpy-show
+   (gpycomplete-get-help (gpy-get-current-expression))))
+
+
+(defun gpy-signature (obj)
+  "Displays the signature for a user entered expression"
+  (interactive "sPython signature on: ")
+  (gpy-show (gpycomplete-get-signature obj)))
+
+
+(defun gpy-help (obj)
+  "Prints the help for a user entered expression"
+  (interactive "sPython help on: ")
+  (gpy-show (gpycomplete-get-help obj)))
+
+
+(defun gpy-complete-and-indent ()
+  "If a set of completions is available for the previous
+expression prints the available completions, if only a single
+completion is available then it is insertered on the buffer. If no
+completions are available it indents"
+  (interactive)
+  (let ((completions (gpy-complete))
+	(buffer (current-buffer)))
+    (if (or (string-equal completions "No completions")
+	    (equal completions nil))
+	(indent-for-tab-command)
+      (progn
+	(get-buffer-create "*gpy-completions*")
+	(set-buffer "*gpy-completions*")
+	(if (not (equal (point-min) (point-max)))
+	    (delete-region (point-min) (point-max)))
+	(insert completions)
+	(goto-char (point-min))
+	(if (not (search-forward "," nil t))
+	    (progn
+	      (setq completion (buffer-substring (point-min) (point-max)))
+	      (set-buffer buffer)
+	      (backward-kill-word 1)
+	      (insert completion))
+	  (display-message-or-buffer (buffer-substring (point-min) (point-max)))
+	  )))))
+
+(defun gpy-refresh-and-dot ()
+  "Refreshes the context to the python interpreter and inserts a ."
+  (interactive)
+  (gpy-refresh-context)
+  (insert "."))
+
+
+(defun gpy-refresh-and-newline ()
+  "Refreshes the context to the python interpreter and inserts a newline"
+  (interactive)
+  (gpy-refresh-context)
+  (newline))
+
+
+(defun gpy-add-path (path)
+  "Adds path to the pythonpath"
+  (interactive
+   (list
+    (expand-file-name (read-directory-name "Add Python path: "))))
+  (message
+   (concat "Added: " (gpycomplete-add-path path))))
+
+
+(defun gpy-set-django-project (path settings-module)
+  "Sets the current django project to work on, where path is the
+path of the project and settings-module is the name of the
+settings file without the .py extension"
+  (interactive
+   (list
+    (expand-file-name (read-directory-name "Django proyect path: "))
+    (read-string "Django settings module: " "settings" nil "settings")))
+  (message (concat "Current django proyect path: " path "\n"
+		   "Django settings module: " settings-module))
+  (gpycomplete-set-django-project path settings-module))
+
+
+(define-key py-mode-map "\M-\C-i" 'gpy-complete)
+(define-key py-mode-map "\t" 'gpy-complete-and-indent)
+(define-key py-mode-map "(" 'gpy-electric-lparen)
+(define-key py-mode-map "," 'gpy-electric-comma)
+(define-key py-mode-map [f1] 'gpy-help-at-point)
+(define-key py-mode-map [f2] 'gpy-signature)
+(define-key py-mode-map [f3] 'gpy-help)
+(define-key py-mode-map "." 'gpy-refresh-and-dot)
+(define-key py-mode-map [return] 'gpy-refresh-and-newline)
+
+;; This hook reloads the gpycomplete python package and refresh the
+;; context when a python file is opened
+(add-hook 'find-file-hook
+	  (lambda ()
+	    (if (string-match "\\.py$" (buffer-file-name))
+		(progn
+		  (pymacs-load "gpycomplete")
+		  (gpy-refresh-context))))
+	  t)
+
+;; This hook reloads the gpycomplete python package and refresh the
+;; context when a python file is saved
+(add-hook 'after-save-hook
+	  (lambda ()
+	    (if (string-match "\\.py$" (buffer-file-name))
+		(progn
+		  (pymacs-load "gpycomplete")
+		  (gpy-refresh-context))))
+	  t)
+
+(provide 'gpycomplete)
