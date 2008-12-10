@@ -25,6 +25,14 @@
 
 (pymacs-load "gpycomplete")
 
+
+(defun gpy-reinitialize ()
+  "Reinitializes gpy, this is just a debug helper"
+  (interactive)
+  (load-file "~/.emacs.d/gpycomplete.el")
+  (pymacs-load "gpycomplete"))
+
+
 (defun gpy-get-code ()
   "Gets all the code written in the current buffer"
   (buffer-substring (point-min) (point-max)))

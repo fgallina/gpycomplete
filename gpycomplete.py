@@ -28,9 +28,57 @@ import os
 import re
 import glob
 
+BUILTIN_KEYS = ['ArithmeticError', 'AssertionError', 'AttributeError',
+                'BaseException', 'DeprecationWarning', 'EOFError',
+                'Ellipsis', 'EnvironmentError', 'Exception', 'False',
+                'FloatingPointError', 'FutureWarning', 'GeneratorExit',
+                'IOError', 'ImportError', 'ImportWarning',
+                'IndentationError', 'IndexError', 'KeyError',
+                'KeyboardInterrupt', 'LookupError', 'MemoryError',
+                'NameError', 'None', 'NotImplemented',
+                'NotImplementedError', 'OSError', 'OverflowError',
+                'PendingDeprecationWarning', 'ReferenceError',
+                'RuntimeError', 'RuntimeWarning', 'StandardError',
+                'StopIteration', 'SyntaxError', 'SyntaxWarning',
+                'SystemError', 'SystemExit', 'TabError', 'True',
+                'TypeError', 'UnboundLocalError', 'UnicodeDecodeError',
+                'UnicodeEncodeError', 'UnicodeError',
+                'UnicodeTranslateError', 'UnicodeWarning', 'UserWarning',
+                'ValueError', 'Warning', 'ZeroDivisionError', '__debug__',
+                '__doc__', '__import__', '__name__', 'abs', 'all', 'any',
+                'apply', 'basestring', 'bool', 'buffer', 'callable',
+                'chr', 'classmethod', 'cmp', 'coerce', 'compile',
+                'complex', 'copyright', 'credits', 'delattr', 'dict',
+                'dir', 'divmod', 'enumerate', 'eval', 'execfile', 'exit',
+                'file', 'filter', 'float', 'frozenset', 'getattr',
+                'globals', 'hasattr', 'hash', 'help', 'hex', 'id',
+                'input', 'int', 'intern', 'isinstance', 'issubclass',
+                'iter', 'len', 'license', 'list', 'locals', 'long', 'map',
+                'max', 'min', 'object', 'oct', 'open', 'ord', 'pow',
+                'property', 'quit', 'range', 'raw_input', 'reduce',
+                'reload', 'repr', 'reversed', 'round', 'set', 'setattr',
+                'slice', 'sorted', 'staticmethod', 'str', 'sum', 'super',
+                'tuple', 'type', 'unichr', 'unicode', 'vars', 'xrange',
+                'zip']
 
-_globals_buffer = []
+PROTECTED_ITEMS = ["__builtins__", "__name__", "__doc__", "__file__",
+                   # imports
+                   "sys", "types", "inspect", "StringIO", "os","re",
+                   "glob", "lisp",
+                   # global variables and constants
+                   "BUILTIN_KEYS", "PROTECTED_ITEMS",
+                   "subprogram_globals_buffer", "subprogram_globals",
+                   # functions
+                   "_delete_globals", "__find_constructor",
+                   "_get_completions", "_get_context", "_get_dir",
+                   "_set_globals", "add_path", "complete", "get_help",
+                   "get_signature","refresh_context",
+                   "set_django_project",
+                   # objects in the if __name__ == "__main__": part
+                   "code"]
 
+subprogram_globals_buffer = {}
+subprogram_globals = {}
 
 def complete(obj, code):
     """Returns the completions parsed as a string"""
@@ -97,20 +145,10 @@ def refresh_context(code):
     executes sucessfully returns a sucess message else a failure
     message
     """
-    # FIXME - implement _set_globals and _delete_globals
-    # strip out executable code
-    pattern = "(if\s+__name__\s*==\s*(\"|')__main__(\"|')\s*:"
-    pattern += "\s*\n+([ \t\r\f\v]+.+\n)+)"
-    code = re.sub(pattern, "", code)
-    # globals()['_globals_buffer'] = globals()
-    # _delete_globals()
-    try:
-        exec code in globals()
+    if _exec_code(code):
         return "This file contains no errors"
-    except:
-        # _set_globals()
+    else:
         return "This file contains errors"
-
 
 def get_signature(obj):
     """Returns the signature of the given object.
@@ -172,47 +210,16 @@ def _find_constructor(class_ob):
 
 def _get_context():
     """returns a list with all the keywords which are in the global scope"""
-    keys = ['ArithmeticError', 'AssertionError', 'AttributeError',
-            'BaseException', 'DeprecationWarning', 'EOFError',
-            'Ellipsis', 'EnvironmentError', 'Exception', 'False',
-            'FloatingPointError', 'FutureWarning', 'GeneratorExit',
-            'IOError', 'ImportError', 'ImportWarning',
-            'IndentationError', 'IndexError', 'KeyError',
-            'KeyboardInterrupt', 'LookupError', 'MemoryError',
-            'NameError', 'None', 'NotImplemented',
-            'NotImplementedError', 'OSError', 'OverflowError',
-            'PendingDeprecationWarning', 'ReferenceError',
-            'RuntimeError', 'RuntimeWarning', 'StandardError',
-            'StopIteration', 'SyntaxError', 'SyntaxWarning',
-            'SystemError', 'SystemExit', 'TabError', 'True',
-            'TypeError', 'UnboundLocalError', 'UnicodeDecodeError',
-            'UnicodeEncodeError', 'UnicodeError',
-            'UnicodeTranslateError', 'UnicodeWarning', 'UserWarning',
-            'ValueError', 'Warning', 'ZeroDivisionError', '__debug__',
-            '__doc__', '__import__', '__name__', 'abs', 'all', 'any',
-            'apply', 'basestring', 'bool', 'buffer', 'callable',
-            'chr', 'classmethod', 'cmp', 'coerce', 'compile',
-            'complex', 'copyright', 'credits', 'delattr', 'dict',
-            'dir', 'divmod', 'enumerate', 'eval', 'execfile', 'exit',
-            'file', 'filter', 'float', 'frozenset', 'getattr',
-            'globals', 'hasattr', 'hash', 'help', 'hex', 'id',
-            'input', 'int', 'intern', 'isinstance', 'issubclass',
-            'iter', 'len', 'license', 'list', 'locals', 'long', 'map',
-            'max', 'min', 'object', 'oct', 'open', 'ord', 'pow',
-            'property', 'quit', 'range', 'raw_input', 'reduce',
-            'reload', 'repr', 'reversed', 'round', 'set', 'setattr',
-            'slice', 'sorted', 'staticmethod', 'str', 'sum', 'super',
-            'tuple', 'type', 'unichr', 'unicode', 'vars', 'xrange',
-            'zip']
-    keys.extend(globals().keys())
-    keys.extend(dir(globals()['__builtins__']))
+    keys = []
+    keys = dir(globals()['__builtins__']) + subprogram_globals.keys()
     keys.sort()
     return keys
 
 
 def _get_completions(word, code):
     """gets the completions for word after evaluating code"""
-    refresh_context(code)
+    global subprogram_globals
+    _exec_code(code)
     keys = _get_context()
     dots = word.split('.')
     # If it is a not completable python expression return an empty list
@@ -220,26 +227,32 @@ def _get_completions(word, code):
     if not re.match(pattern, word):
         return []
     elif word.rfind('.') == -1:
+        print word + " - sin puntos"
         # If the word is a simple statement not containing "." return
         # the global keys starting with the word
         return [i for i in keys if i.startswith(word)]
     else:
         # If word ends with a "." strip it and execute _get_dir
         if word.endswith('.'):
-            try:
-                module = eval(word[:-1])
+            print word + " - termina con punto"
+            module = _eval_code(word[:-1])
+            if module:
                 return _get_dir(module)
-            except:
+            else:
                 return []
         else:
+            print word + " - tiene un punto en algun lado"
             # If word does not ends with "." but it contains a dot
             # then eval word up to ".", split the remaining part, get
             # the attributes of the module when the attribute starts
             # with the remaining
             dot_index = word.rfind('.')
-            module = eval(word[:dot_index])
-            mword = word[dot_index+1:]
-            return [i for i in _get_dir(module) if i.startswith(mword)]
+            module = _eval_code(word[:dot_index])
+            if module:
+                mword = word[dot_index+1:]
+                return [i for i in _get_dir(module) if i.startswith(mword)]
+            else:
+                return []
 
 
 def _get_dir(obj):
@@ -249,8 +262,6 @@ def _get_dir(obj):
     except:
         path = None
     attributes = dir(obj)
-    # If object has __path__ then it may contain subpackages, if so
-    # append them togheter with the available modules of object
     if path:
         for path in obj.__path__:
             for subdir in os.listdir(path):
@@ -263,45 +274,50 @@ def _get_dir(obj):
     attributes.sort()
     return attributes
 
+def _exec_code(code):
+    """Executes code in a sure way in the subprogram_globals dict
+    """
+    global subprogram_globals_buffer
+    global subprogram_globals
+    pattern = "(if\s+__name__\s*==\s*(\"|')__main__(\"|')\s*:"
+    pattern += "\s*\n+([ \t\r\f\v]+.+\n)+)"
+    code = re.sub(pattern, "", code)
+    subprogram_globals_buffer = {}
+    success = False
+    try:
+        exec code in subprogram_globals_buffer
+        success = True
+    except:
+        success = False
+    if success:
+        subprogram_globals = subprogram_globals_buffer
+    return success
 
-def _delete_globals():
-    # FIXME - To implement
-    protected_items = ["__builtins__", "__name__", "__doc__",
-                       # imports
-                       "sys", "types", "inspect", "StringIO", "os","re",
-                       "glob", "lisp",
-                       # variables and constants
-                       "_globals_buffer", "_STRINGIO", "_STDOUT",
-                       # functions
-                       "refresh_context", "complete", "_get_completions",
-                       "_get_dir", "_delete_globals", "_set_globals",
-                       "get_help", "get_signature", "set_path",
-                       "set_django_project",
-                       # objects in the if __name__ == "__main__": part
-                       "code"]
-    for key in globals().keys():
-        if key not in protected_items:
-            del(globals()[key])
-
-
-def _set_globals():
-    # FIXME - To implement
-    for key in globals()['_globals_buffer'].keys():
-        globals()[key] = globals()['_globals_buffer'][key]
+def _eval_code(code):
+    """Evals code in the subprogram_globals dictionary"""
+    global subprogram_globals
+    module = None
+    try:
+        module = eval(code, subprogram_globals)
+    except:
+        module = None
+    return module
 
 
 if __name__ == "__main__":
-    code = "import django\nimport django.contrib\na = django.contrib"
-    print complete("djan", code)
+    code = "import django\nimport django.contrib\na = django.contrib\nimport sys"
+    complete("di", code)
+    subprogram_globals_buffer
+    complete("di", code)
+    complete("djan", code)
     print complete("django.con", code)
-    print complete("sys", code)
-    print complete("a.", code)
-    print complete("di", code)
-    print get_signature("sys.path")
-    print get_signature("dir")
-    print get_signature("glob.glob")
-    print get_signature("_get_completions(\"asdasd\",\"sdsada\"")
-    print get_help("dir")
-    print get_help("django.contrib")
-    print _get_context()
-    print get_help("sys.path.append")
+    complete("sys", code)
+    print complete("a.r", code)
+#     print get_signature("sys.path")
+#     print get_signature("dir")
+#     print get_signature("glob.glob")
+#     print get_signature("_get_completions(\"asdasd\",\"sdsada\"")
+#     print get_help("dir")
+#     print get_help("django.contrib")
+#     print _get_context()
+#     print get_help("sys.path.append")
