@@ -79,6 +79,9 @@ PROTECTED_ITEMS = ["__builtins__", "__name__", "__doc__", "__file__",
 
 subprogram_globals_buffer = {}
 subprogram_globals = {}
+helper_globals = {}
+helper_globals_buffer = {}
+
 
 def complete(obj, code):
     """Returns the completions parsed as a string"""
@@ -102,18 +105,19 @@ def get_help(obj):
     """Returns the help of the given object.
     Inspired in the original pycomplete package
     """
+    global helper_globals
     paren = obj.rfind("(")
     if paren != -1:
         obj = obj[:paren]
     if obj.endswith("(") or obj.endswith("."):
         obj = obj[:-1]
+    context = 'subprogram_globals'
     if not obj in _get_context():
+        context = 'helper_globals'
         code = "import " + obj
-        try:
-            exec code in globals()
-        except:
-            pass
-    obj = eval(obj)
+        if not _exec_code(code, 'helper_globals_buffer'):
+            return "no help string for " + obj
+    obj = _eval_code(obj, context)
     stdout = sys.stdout
     out = StringIO.StringIO()
     try:
@@ -150,31 +154,35 @@ def refresh_context(code):
     else:
         return "This file contains errors"
 
+
+
 def get_signature(obj):
     """Returns the signature of the given object.
     Inspired in the original pycomplete package
     """
-    if not re.match("^[A-Za-z_][A-Za-z_0-9]*([.][A-Za-z_][A-Za-z_0-9]*)*.*$", obj):
-        return ""
     paren = obj.find("(")
     if paren != -1:
         obj = obj[:paren]
+    context = 'subprogram_globals'
     if not obj in _get_context():
+        context = 'helper_globals'
         dot = obj.rfind('.')
         if dot != -1:
             pobj = obj[:dot]
         else:
             pobj = obj
-        try:
+        imported = False
+        while not imported and dot != -1:
             code = "import " + pobj
-            exec code in globals()
-        except:
-            pass
-    sig = ""
+            imported = _exec_code(code, context)
+            dot = pobj.rfind('.')
+            pobj = pobj[:dot]
     try:
-        obj = eval(obj)
+        obj = _eval_code(obj, context)
     except:
         return ""
+    print obj
+    sig = ""
     # This part is extracted from the pycomplete.py file
     if type(obj) in (types.ClassType, types.TypeType):
         obj = _find_constructor(obj)
@@ -210,8 +218,11 @@ def _find_constructor(class_ob):
 
 def _get_context():
     """returns a list with all the keywords which are in the global scope"""
+    global BUILTIN_KEYS
     keys = []
-    keys = dir(globals()['__builtins__']) + subprogram_globals.keys()
+    keys = dir(globals()['__builtins__']) + \
+           subprogram_globals.keys() + \
+           BUILTIN_KEYS
     keys.sort()
     return keys
 
@@ -227,21 +238,18 @@ def _get_completions(word, code):
     if not re.match(pattern, word):
         return []
     elif word.rfind('.') == -1:
-        print word + " - sin puntos"
         # If the word is a simple statement not containing "." return
         # the global keys starting with the word
         return [i for i in keys if i.startswith(word)]
     else:
         # If word ends with a "." strip it and execute _get_dir
         if word.endswith('.'):
-            print word + " - termina con punto"
             module = _eval_code(word[:-1])
             if module:
                 return _get_dir(module)
             else:
                 return []
         else:
-            print word + " - tiene un punto en algun lado"
             # If word does not ends with "." but it contains a dot
             # then eval word up to ".", split the remaining part, get
             # the attributes of the module when the attribute starts
@@ -274,50 +282,68 @@ def _get_dir(obj):
     attributes.sort()
     return attributes
 
-def _exec_code(code):
+def _exec_code(code, context='subprogram_globals_buffer'):
     """Executes code in a sure way in the subprogram_globals dict
     """
     global subprogram_globals_buffer
     global subprogram_globals
+    global helper_globals_buffer
+    global helper_globals
     pattern = "(if\s+__name__\s*==\s*(\"|')__main__(\"|')\s*:"
     pattern += "\s*\n+([ \t\r\f\v]+.+\n)+)"
     code = re.sub(pattern, "", code)
     subprogram_globals_buffer = {}
+    helper_globals_buffer = {}
     success = False
     try:
-        exec code in subprogram_globals_buffer
+        if context.startswith('subprogram_globals'):
+            exec code in subprogram_globals_buffer
+        elif context.startswith('helper_globals'):
+            exec code in helper_globals_buffer
         success = True
     except:
         success = False
     if success:
-        subprogram_globals = subprogram_globals_buffer
+        if context == 'subprogram_globals_buffer':
+            subprogram_globals = subprogram_globals_buffer
+        else:
+            helper_globals = helper_globals_buffer
     return success
 
-def _eval_code(code):
-    """Evals code in the subprogram_globals dictionary"""
+
+def _eval_code(code, context='subprogram_globals'):
+    """Evals code in the given context"""
     global subprogram_globals
-    module = None
+    global subprogram_globals_buffer
+    global helper_globals
+    obj = None
     try:
-        module = eval(code, subprogram_globals)
+        if context == 'subprogram_globals':
+            obj = eval(code, subprogram_globals)
+        elif context == 'subprogram_globals_buffer':
+            obj = eval(code, subprogram_globals_buffer)
+        elif context == 'helper_globals':
+            obj = eval(code, helper_globals)
+        elif context == 'helper_globals_buffer':
+            obj = eval(code, helper_globals_buffer)
     except:
-        module = None
-    return module
+        obj = None
+    return obj
 
 
 if __name__ == "__main__":
-    code = "import django\nimport django.contrib\na = django.contrib\nimport sys"
-    complete("di", code)
-    subprogram_globals_buffer
-    complete("di", code)
-    complete("djan", code)
+    code = ""
+    print complete("djan", code)
     print complete("django.con", code)
-    complete("sys", code)
-    print complete("a.r", code)
-#     print get_signature("sys.path")
-#     print get_signature("dir")
-#     print get_signature("glob.glob")
-#     print get_signature("_get_completions(\"asdasd\",\"sdsada\"")
-#     print get_help("dir")
-#     print get_help("django.contrib")
-#     print _get_context()
-#     print get_help("sys.path.append")
+    print complete("sys", code)
+    print complete("a.", code)
+    print complete("di", code)
+    print get_signature("sys.path")
+    print get_signature("dir")
+    print get_signature("glob.glob(")
+    print get_signature("_get_completions(")
+    print get_help("dir")
+    print get_help("django.contrib")
+    print get_help("sys.path.append")
+    print get_signature('django.http.Http404.__init__')
+
