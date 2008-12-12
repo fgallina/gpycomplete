@@ -83,7 +83,7 @@ helper_globals = {}
 helper_globals_buffer = {}
 
 
-def complete(obj, code):
+def complete(obj, code, subcontext=""):
     """Returns the completions parsed as a string"""
     completions = _get_completions(obj, code)
     msg = ""
@@ -201,6 +201,16 @@ def get_signature(obj):
             pos = 70
         sig = doc[:pos]
     return sig
+
+
+def get_path(position, code):
+    """Returns the path were the pointer is currently
+
+    Arguments:
+    - `position`: the position of the pointer
+    - `code`: the code to check
+    """
+    return str(position)
 
 
 def _find_constructor(class_ob):
@@ -332,7 +342,7 @@ def _eval_code(code, context='subprogram_globals'):
 
 
 if __name__ == "__main__":
-    code = ""
+    code = "import django\nimport django.contrib\nimport sys\na = django"
     print complete("djan", code)
     print complete("django.con", code)
     print complete("sys", code)
@@ -346,4 +356,3 @@ if __name__ == "__main__":
     print get_help("django.contrib")
     print get_help("sys.path.append")
     print get_signature('django.http.Http404.__init__')
-

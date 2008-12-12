@@ -54,6 +54,47 @@
     (buffer-substring gpylbound (point))))
 
 
+(defun gpy-get-nearest-symbol (symbol-type)
+  "Returns the name of the nearest symbol-type (function, method,
+class, nested"
+  (interactive "s")
+  (save-excursion
+    (cond
+     ((equal symbol-type "function")
+      (re-search-backward "^\\(\\)def +\\([a-zA-Z0-9_.]+\\).*" nil t))
+     ((equal symbol-type "class")
+      (re-search-backward "^\\(\\)class +\\([a-zA-Z0-9_.]+\\).*" nil t))
+     ((equal symbol-type "method")
+      (re-search-backward "^\\( +\\)def +\\([a-zA-Z0-9_.]+\\).*" nil t))
+     ((equal symbol-type "nested")
+      (re-search-backward "^\\( +\\)class +\\([a-zA-Z0-9_.]+\\).*" nil t)))
+    (let ((gpy-nearest-symbol-point (point))
+	  (gpy-nearest-symbol-indentation (match-string-no-properties 1))
+	  (gpy-nearest-symbol (match-string-no-properties 2)))
+      (if (equal gpy-nearest-symbol nil)
+	  (progn
+	    (setq gpy-nearest-symbol "")
+	    (setq gpy-nearest-symbol-indentation "")
+	    (setq gpy-nearest-symbol-point 0)))
+      (if (equal (interactive-p) t)
+	  (message (concat "simbol: " gpy-nearest-symbol "\n"
+			   "point: " (number-to-string gpy-nearest-symbol-point) "\n"
+			   "indentation: [" gpy-nearest-symbol-indentation "]"))
+	(list gpy-nearest-symbol gpy-nearest-symbol-point gpy-nearest-symbol-indentation)))))
+
+
+(defun gpy-get-subcontext ()
+  "Gets the current function or class where the user could be into"
+  (interactive)
+  (let ((gpy-nearest-function-info (gpy-get-nearest-symbol "function"))
+	(gpy-nearest-class-info (gpy-get-nearest-symbol "class"))
+	(current-point (point)))
+    (if (< (- current-point (car (nthcdr 1 gpy-nearest-class-info)))
+	   (- current-point (car (nthcdr 1 gpy-nearest-function-info))))
+	(car (nthcdr 0 gpy-nearest-class-info))
+      (car (nthcdr 0 gpy-nearest-function-info)))))
+
+
 (defun gpy-show (string)
   "Shows string in the *gpycomplete* buffer"
   (display-message-or-buffer string "*gpycomplete*"))
@@ -75,7 +116,7 @@ displays the result"
 
 (defun gpy-complete ()
   "Returns all the available completions for the previous expression"
-  (gpycomplete-complete (gpy-get-current-expression) (gpy-get-code)))
+  (gpycomplete-complete (gpy-get-current-expression) (gpy-get-code) (gpy-get-subcontext)))
 
 
 (defun gpy-electric-lparen ()
@@ -186,7 +227,16 @@ settings file without the .py extension"
 (define-key py-mode-map [f2] 'gpy-signature)
 (define-key py-mode-map [f3] 'gpy-help)
 (define-key py-mode-map "." 'gpy-refresh-and-dot)
-(define-key py-mode-map [return] 'gpy-refresh-and-newline)
+;; (define-key py-mode-map [return] 'gpy-refresh-and-newline)
+;; (define-key py-mode-map [up] 'gpy-move-up)
+;; (define-key py-mode-map [down] 'gpy-move-down)
+;; (define-key py-mode-map [right] 'gpy-move-right)
+;; (define-key py-mode-map [left] 'gpy-move-left)
+;; (define-key py-mode-map "\C-p" 'gpy-move-up)
+;; (define-key py-mode-map "\C-n" 'gpy-move-down)
+;; (define-key py-mode-map "\C-f" 'gpy-move-right)
+;; (define-key py-mode-map "\C-b" 'gpy-move-left)
+
 
 ;; This hook reloads the gpycomplete python package and refresh the
 ;; context when a python file is opened
