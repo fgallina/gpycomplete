@@ -81,10 +81,12 @@ subprogram_globals_buffer = {}
 subprogram_globals = {}
 helper_globals = {}
 helper_globals_buffer = {}
+# FIXME - CONVERT SUBCONTEXT_GLOBALS IN A DICT
+subcontext_globals = []
 
-
-def complete(obj, code, subcontext=""):
+def complete(obj, code, subcontext="", cursor_indentation=""):
     """Returns the completions parsed as a string"""
+    _calculate_subcontext(subcontext, cursor_indentation)
     completions = _get_completions(obj, code)
     msg = ""
     maxwidth = 80
@@ -105,19 +107,24 @@ def get_help(obj):
     """Returns the help of the given object.
     Inspired in the original pycomplete package
     """
-    global helper_globals
     paren = obj.rfind("(")
     if paren != -1:
         obj = obj[:paren]
     if obj.endswith("(") or obj.endswith("."):
         obj = obj[:-1]
+    out = "no help string for " + obj
+    found = False
     context = 'subprogram_globals'
     if not obj in _get_context():
         context = 'helper_globals'
-        code = "import " + obj
-        if not _exec_code(code, 'helper_globals_buffer'):
-            return "no help string for " + obj
-    obj = _eval_code(obj, context)
+        found = _import(obj, context)
+    else:
+        found = True
+    if obj not in subcontext_globals and \
+       found == True:
+        obj = _eval_code(obj, context)
+    else:
+        return out
     stdout = sys.stdout
     out = StringIO.StringIO()
     try:
@@ -155,33 +162,23 @@ def refresh_context(code):
         return "This file contains errors"
 
 
-
 def get_signature(obj):
     """Returns the signature of the given object.
     Inspired in the original pycomplete package
     """
+    # FIXME - make this function less ugly
     paren = obj.find("(")
     if paren != -1:
         obj = obj[:paren]
     context = 'subprogram_globals'
     if not obj in _get_context():
         context = 'helper_globals'
-        dot = obj.rfind('.')
-        if dot != -1:
-            pobj = obj[:dot]
-        else:
-            pobj = obj
-        imported = False
-        while not imported and dot != -1:
-            code = "import " + pobj
-            imported = _exec_code(code, context)
-            dot = pobj.rfind('.')
-            pobj = pobj[:dot]
+        if not _import(obj, context):
+            return "no signature for" + obj
     try:
         obj = _eval_code(obj, context)
     except:
-        return ""
-    print obj
+        return "no signature for" + obj
     sig = ""
     # This part is extracted from the pycomplete.py file
     if type(obj) in (types.ClassType, types.TypeType):
@@ -226,13 +223,47 @@ def _find_constructor(class_ob):
     return None
 
 
+def _calculate_subcontext(subcontext, cursor_indentation):
+    # 0: indentation
+    # 1: type (def or class)
+    # 2: name
+    # 3: point
+    # FIXME - get complete subcontext for classes and methods
+    global subcontext_globals
+    code = ""
+    if subcontext and subcontext[len(subcontext)-1][0] < cursor_indentation:
+        for i in range(len(subcontext)):
+            try:
+                if subcontext[i][0] != subcontext[i+1][0]:
+                    code += subcontext[i][2] + "."
+            except IndexError:
+                code += subcontext[i][2] + "."
+        code = code[:-1]
+        obj = _eval_code(code)
+        context = []
+        if type(obj) == types.MethodType:
+            context = list(obj.im_func.func_code.co_varnames)
+            for item in dir(obj):
+                context.append(item)
+        elif type(obj) == types.FunctionType:
+            context = list(obj.func_code.co_varnames)
+        subcontext_globals = context
+    else:
+        subcontext_globals = []
+    return code
+
+
 def _get_context():
     """returns a list with all the keywords which are in the global scope"""
     global BUILTIN_KEYS
+    global helper_globals
+    global subcontext_globals
     keys = []
     keys = dir(globals()['__builtins__']) + \
            subprogram_globals.keys() + \
-           BUILTIN_KEYS
+           helper_globals.keys() + \
+           BUILTIN_KEYS + \
+           subcontext_globals
     keys.sort()
     return keys
 
@@ -292,6 +323,7 @@ def _get_dir(obj):
     attributes.sort()
     return attributes
 
+
 def _exec_code(code, context='subprogram_globals_buffer'):
     """Executes code in a sure way in the subprogram_globals dict
     """
@@ -341,18 +373,35 @@ def _eval_code(code, context='subprogram_globals'):
     return obj
 
 
+def _import(obj, context='helper_globals'):
+    dot = obj.rfind('.')
+    if dot != -1:
+       pobj = obj[:dot]
+    else:
+       pobj = obj
+       dot = 1
+    imported = False
+    while not imported and dot != -1:
+       code = "import " + pobj
+       imported = _exec_code(code, context)
+       dot = pobj.rfind('.')
+       pobj = pobj[:dot]
+    return imported
+
+
 if __name__ == "__main__":
-    code = "import django\nimport django.contrib\nimport sys\na = django"
-    print complete("djan", code)
-    print complete("django.con", code)
-    print complete("sys", code)
-    print complete("a.", code)
-    print complete("di", code)
-    print get_signature("sys.path")
-    print get_signature("dir")
-    print get_signature("glob.glob(")
-    print get_signature("_get_completions(")
-    print get_help("dir")
-    print get_help("django.contrib")
-    print get_help("sys.path.append")
-    print get_signature('django.http.Http404.__init__')
+    code = "import django\nimport django.contrib\nimport sys\na = django\ndef test(a):\n\tbar = a\n\tfoo = 2"
+#     print complete("djan", code)
+#     print complete("django.con", code)
+#     print complete("sys", code)
+#     print complete("a.", code)
+    print complete("di", code, [["","def","test",2313]], "\t")
+#     print get_signature("sys.path")
+#     print get_signature("dir")
+#     print get_signature("glob.glob(")
+#     print get_signature("_get_completions(")
+#     print get_help("django.contrib")
+    print get_help("foo")
+    print get_help("sys.path")
+#    print complete("fo", code, [["","def","test",2313]], "\t")
+#    print complete("fo", code, [["","def","test",234]],"\t")

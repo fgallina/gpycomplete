@@ -37,6 +37,7 @@
   "Gets all the code written in the current buffer"
   (buffer-substring (point-min) (point-max)))
 
+
 (defun gpy-get-current-expression ()
   "Gets the current expression to complete"
   (save-restriction
@@ -54,45 +55,43 @@
     (buffer-substring gpylbound (point))))
 
 
-(defun gpy-get-nearest-symbol (symbol-type)
-  "Returns the name of the nearest symbol-type (function, method,
-class, nested"
-  (interactive "s")
+(defun gpy-get-cursor-indentation ()
   (save-excursion
-    (cond
-     ((equal symbol-type "function")
-      (re-search-backward "^\\(\\)def +\\([a-zA-Z0-9_.]+\\).*" nil t))
-     ((equal symbol-type "class")
-      (re-search-backward "^\\(\\)class +\\([a-zA-Z0-9_.]+\\).*" nil t))
-     ((equal symbol-type "method")
-      (re-search-backward "^\\( +\\)def +\\([a-zA-Z0-9_.]+\\).*" nil t))
-     ((equal symbol-type "nested")
-      (re-search-backward "^\\( +\\)class +\\([a-zA-Z0-9_.]+\\).*" nil t)))
-    (let ((gpy-nearest-symbol-point (point))
-	  (gpy-nearest-symbol-indentation (match-string-no-properties 1))
-	  (gpy-nearest-symbol (match-string-no-properties 2)))
-      (if (equal gpy-nearest-symbol nil)
-	  (progn
-	    (setq gpy-nearest-symbol "")
-	    (setq gpy-nearest-symbol-indentation "")
-	    (setq gpy-nearest-symbol-point 0)))
-      (if (equal (interactive-p) t)
-	  (message (concat "simbol: " gpy-nearest-symbol "\n"
-			   "point: " (number-to-string gpy-nearest-symbol-point) "\n"
-			   "indentation: [" gpy-nearest-symbol-indentation "]"))
-	(list gpy-nearest-symbol gpy-nearest-symbol-point gpy-nearest-symbol-indentation)))))
+    (re-search-backward "^\\( *\\)" nil t)
+    (match-string-no-properties 1)))
+
+
+(defun gpy-get-nearest-definition (&optional prev)
+  "Goes to the nearest definition and returns its indentation, its type, its name and its point.
+An optional argument tells the function to search backwards"
+  (if (not (equal nil prev))
+      (re-search-backward "^\\( *\\)\\(def\\|class\\) +\\([a-zA-Z0-9_.]+\\).*" nil t)
+    (re-search-forward "^\\( *\\)\\(def\\|class\\) +\\([a-zA-Z0-9_.]+\\).*" nil t))
+  (let ((gpy-nearest-symbol-point (point))
+	(gpy-nearest-symbol-indentation (match-string-no-properties 1))
+	(gpy-nearest-symbol-type (match-string-no-properties 2))
+	(gpy-nearest-symbol-name (match-string-no-properties 3)))
+    (if (equal gpy-nearest-symbol-name nil)
+	(progn
+	  (setq gpy-nearest-symbol-indentation "")
+	  (setq gpy-nearest-symbol-type "")
+	  (setq gpy-nearest-symbol-name "")
+	  (setq gpy-nearest-symbol-point 0)))
+    (list gpy-nearest-symbol-indentation
+	  gpy-nearest-symbol-type
+	  gpy-nearest-symbol-name
+	  gpy-nearest-symbol-point)))
 
 
 (defun gpy-get-subcontext ()
   "Gets the current function or class where the user could be into"
   (interactive)
-  (let ((gpy-nearest-function-info (gpy-get-nearest-symbol "function"))
-	(gpy-nearest-class-info (gpy-get-nearest-symbol "class"))
-	(current-point (point)))
-    (if (< (- current-point (car (nthcdr 1 gpy-nearest-class-info)))
-	   (- current-point (car (nthcdr 1 gpy-nearest-function-info))))
-	(car (nthcdr 0 gpy-nearest-class-info))
-      (car (nthcdr 0 gpy-nearest-function-info)))))
+  (save-excursion
+    (let ((symbol nil)
+	  (list-of-definitions nil))
+      (while (not (equal "" (nth 0 (setq symbol (gpy-get-nearest-definition t)))))
+	(setq list-of-definitions (cons symbol list-of-definitions)))
+      (setq list-of-definitions (cons (gpy-get-nearest-definition) list-of-definitions)))))
 
 
 (defun gpy-show (string)
@@ -116,8 +115,15 @@ displays the result"
 
 (defun gpy-complete ()
   "Returns all the available completions for the previous expression"
-  (gpycomplete-complete (gpy-get-current-expression) (gpy-get-code) (gpy-get-subcontext)))
+  (gpycomplete-complete (gpy-get-current-expression)
+			(gpy-get-code)
+			(gpy-get-subcontext)
+			(gpy-get-cursor-indentation)))
 
+(defun gpy-test ()
+  (interactive)
+  (message
+   (gpycomplete--calculate-subcontext (gpy-get-subcontext) (gpy-get-cursor-indentation))))
 
 (defun gpy-electric-lparen ()
   "Displays the signature of the previous expresion when a left
@@ -182,6 +188,7 @@ completions are available it indents"
 	      (insert completion))
 	  (display-message-or-buffer (buffer-substring (point-min) (point-max)))
 	  )))))
+
 
 (defun gpy-refresh-and-dot ()
   "Refreshes the context to the python interpreter and inserts a ."
