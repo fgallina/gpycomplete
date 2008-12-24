@@ -1,5 +1,15 @@
 This package contains gpycomplete.
 
+0. Info
+
+   Author: Fabián Ezequiel Gallina
+   Contact: fgallina at caffeinegroup dot com dot ar
+   Project homepage: http://github.com/fgallina/gpycomplete
+   Wiki: http://github.com/fgallina/gpycomplete/wikis
+   Screencast: http://blip.tv/file/1559227/
+   My Blog: http://www.caffeinegroup.com.ar
+
+
 1. Introduction
 
    gpycomplete is a python code autocompletion and helper suite for
@@ -22,7 +32,7 @@ This package contains gpycomplete.
    the latest stable release 0.23 (since this package was sucessfully
    tested with that version). If you run this package with a different
    version please let me know at:
-   fgallina --at-- caffeinegroup --dot-- com --dot-- ar
+   fgallina at caffeinegroup dot com dot ar
 
    You can download Pymacs 0.23 from:
    http://pymacs.progiciels-bpi.ca/archives/Pymacs-0.23.tar.gz
@@ -31,6 +41,9 @@ This package contains gpycomplete.
    gpycomplete are mapped into py-mode-map so they are only available
    when editing a python file. You can download python-mode.el from:
    https://launchpad.net/python-mode/+download
+
+   Regarding the version of Emacs, this package was tested successfully
+   with 22.1 and 23.0.60
 
 3. Installation
 
@@ -89,7 +102,7 @@ This package contains gpycomplete.
 5. Bug Reports
 
    If you find a bug please report it to:
-   fgallina --at-- caffeinegroup --dot-- com --dot-- ar
+   fgallina at caffeinegroup dot com dot ar
 
 
 6. License
