@@ -26,7 +26,43 @@
 (pymacs-load "gpycomplete")
 
 
-(defun gpy-reinitialize ()
+(defgroup python nil
+  "Inline autocompletion for the python language"
+  :group 'languages
+  :prefix "gpy-")
+
+
+(defcustom gpy-completions-separator ", "
+  "the separator string used to break each completion"
+  :type 'string
+  :group 'python)
+
+
+(defcustom gpy-no-completions-error "No Completions!"
+  "Error to display when no completions available"
+  :type 'string
+  :group 'python)
+
+
+(defcustom gpy-max-completions 0
+  "The number of completions to display, if 0 it means no limit"
+  :type 'integer
+  :group 'python)
+
+
+(defcustom gpy-completions-fill-column 80
+  "The number of characters per line to show in the completions buffer"
+  :type 'integer
+  :group 'python)
+
+
+(defcustom gpy-completions-buffer-name "*gpy-completions*"
+  "Error to display when no completions available"
+  :type 'string
+  :group 'python)
+
+
+(defun gpy-reload ()
   "Reinitializes gpy, this is just a debug helper"
   (interactive)
   (load-file "~/.emacs.d/gpycomplete.el")
@@ -94,6 +130,48 @@ An optional argument tells the function to search backwards"
       (setq list-of-definitions (cons (gpy-get-nearest-definition) list-of-definitions)))))
 
 
+(defun gpy-find-shortest-word (words)
+  "given a list of words it returns the shortest"
+  (let ((shortest)
+	(max)
+	(index 0))
+    (setq shortest 0)
+    (setq max (length words))
+    (while (< index max)
+      (if (< (length (nth index words))
+	     (length (nth shortest words)))
+	  (setq shortest index))
+      (setq index (+ 1 index)))
+    (nth shortest words)))
+
+
+(defun gpy-find-equal-string-from-start (words)
+  "given a list of words it returns the longest string which matches
+with the beginning of all the words of the list.
+
+For example, given the list \('calefon' 'calabaza' 'caliente') it
+returns 'cal'
+"
+  (let ((current-string (gpy-find-shortest-word words))
+	(matches-with-all nil)
+	(index 0)
+	(max (length words)))
+    (while (and (equal matches-with-all nil)
+		(not (equal current-string "")))
+      (setq matches-with-all t)
+      (setq index 0)
+      (while (and (< index max)
+		  (equal matches-with-all t))
+	(if (equal
+	     (string-match (concat "^" current-string)
+			   (nth index words)) nil)
+	    (setq matches-with-all nil))
+	(setq index (+ 1 index)))
+      (if (equal matches-with-all nil)
+	  (setq current-string (substring current-string 0 -1))))
+    current-string))
+
+
 (defun gpy-show (string)
   "Shows string in the *gpycomplete* buffer"
   (display-message-or-buffer string "*gpycomplete*"))
@@ -113,17 +191,15 @@ displays the result"
    (gpycomplete-refresh-context (gpy-get-code))))
 
 
-(defun gpy-complete ()
-  "Returns all the available completions for the previous expression"
-  (gpycomplete-complete (gpy-get-current-expression)
-			(gpy-get-code)
-			(gpy-get-subcontext)
-			(gpy-get-cursor-indentation)))
-
-(defun gpy-test ()
+(defun gpy-get-completions nil
+  "Returns a list with all the the available completions for the
+expression behind the pointer"
   (interactive)
-  (message
-   (gpycomplete--calculate-subcontext (gpy-get-subcontext) (gpy-get-cursor-indentation))))
+  (gpycomplete-get-completions (gpy-get-current-expression)
+			       (gpy-get-code)
+			       (gpy-get-subcontext)
+			       (gpy-get-cursor-indentation)))
+
 
 (defun gpy-electric-lparen ()
   "Displays the signature of the previous expresion when a left
@@ -162,32 +238,63 @@ is typed and inserts ,"
   (gpy-show (gpycomplete-get-help obj)))
 
 
+(defun gpy-show-completions (string)
+  "Shows the parsed completion list"
+  (let ((buffer (current-buffer)))
+    (get-buffer-create gpy-completions-buffer-name)
+    (set-buffer gpy-completions-buffer-name)
+    (erase-buffer)
+    (insert string)
+    (mark-whole-buffer)
+    (set-fill-column gpy-completions-fill-column)
+    (fill-region (point-min) (point-max))
+    (message (buffer-substring (point-min) (point-max)))
+    (set-buffer buffer)))
+
+
+(defun gpy-parse-completions (completions)
+  "parses the list of completions into a string and returns what
+should be shown on the *gpy-completions* buffer"
+  (interactive)
+  (if (not (equal completions nil))
+      (progn
+	(let ((limit gpy-max-completions)
+	      (i 0)
+	      (parsed ""))
+	  (if (equal limit 0)
+	      (setq limit (length completions)))
+	  (while (and (not (equal i limit))
+		      (not (equal nil (nth i completions))))
+	    (setq parsed
+		  (concat parsed
+			  (nth i completions)
+			  gpy-completions-separator))
+	    (setq i (+ 1 i)))
+	  (setq parsed (substring parsed 0
+				  (- (length parsed)
+				     (length gpy-completions-separator))))
+	  parsed))
+    gpy-no-completions-error))
+
 (defun gpy-complete-and-indent ()
   "If a set of completions is available for the previous
 expression prints the available completions, if only a single
 completion is available then it is insertered on the buffer. If no
 completions are available it indents"
   (interactive)
-  (let ((completions (gpy-complete))
+  (let ((completions-list)
+	(parsed-completions)
 	(buffer (current-buffer)))
-    (if (or (string-equal completions "No completions")
-	    (equal completions nil))
-	(indent-for-tab-command)
+    (setq completions-list (gpy-get-completions))
+    (setq parsed-completions (gpy-parse-completions completions-list))
+    (if (equal completions-list nil)
+	(progn
+	  (indent-for-tab-command)
+	  (gpy-show-completions parsed-completions))
       (progn
-	(get-buffer-create "*gpy-completions*")
-	(set-buffer "*gpy-completions*")
-	(if (not (equal (point-min) (point-max)))
-	    (delete-region (point-min) (point-max)))
-	(insert completions)
-	(goto-char (point-min))
-	(if (not (search-forward "," nil t))
-	    (progn
-	      (setq completion (buffer-substring (point-min) (point-max)))
-	      (set-buffer buffer)
-	      (backward-kill-word 1)
-	      (insert completion))
-	  (display-message-or-buffer (buffer-substring (point-min) (point-max)))
-	  )))))
+	(gpy-show-completions parsed-completions)
+	(backward-kill-word 1)
+	(insert (gpy-find-equal-string-from-start completions-list))))))
 
 
 (defun gpy-refresh-and-dot ()
@@ -226,7 +333,6 @@ settings file without the .py extension"
   (gpycomplete-set-django-project path settings-module))
 
 
-(define-key py-mode-map "\M-\C-i" 'gpy-complete)
 (define-key py-mode-map "\t" 'gpy-complete-and-indent)
 (define-key py-mode-map "(" 'gpy-electric-lparen)
 (define-key py-mode-map "," 'gpy-electric-comma)
@@ -234,15 +340,7 @@ settings file without the .py extension"
 (define-key py-mode-map [f2] 'gpy-signature)
 (define-key py-mode-map [f3] 'gpy-help)
 (define-key py-mode-map "." 'gpy-refresh-and-dot)
-;; (define-key py-mode-map [return] 'gpy-refresh-and-newline)
-;; (define-key py-mode-map [up] 'gpy-move-up)
-;; (define-key py-mode-map [down] 'gpy-move-down)
-;; (define-key py-mode-map [right] 'gpy-move-right)
-;; (define-key py-mode-map [left] 'gpy-move-left)
-;; (define-key py-mode-map "\C-p" 'gpy-move-up)
-;; (define-key py-mode-map "\C-n" 'gpy-move-down)
-;; (define-key py-mode-map "\C-f" 'gpy-move-right)
-;; (define-key py-mode-map "\C-b" 'gpy-move-left)
+(define-key py-mode-map [return] 'gpy-refresh-and-newline)
 
 
 ;; This hook reloads the gpycomplete python package and refresh the

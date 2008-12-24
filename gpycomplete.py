@@ -84,23 +84,11 @@ helper_globals_buffer = {}
 # FIXME - CONVERT SUBCONTEXT_GLOBALS IN A DICT
 subcontext_globals = []
 
-def complete(obj, code, subcontext="", cursor_indentation=""):
+
+def get_completions(obj, code, subcontext="", cursor_indentation=""):
     """Returns the completions parsed as a string"""
     _calculate_subcontext(subcontext, cursor_indentation)
-    completions = _get_completions(obj, code)
-    msg = ""
-    maxwidth = 80
-    currwidth = 0
-    for completion in completions:
-        if currwidth >= 80:
-            msg += '\n'
-            currwidth = 0
-        msg += completion + ", "
-        currwidth += len(completion) + 2
-    if completions:
-        return msg[:msg.rfind(',')]
-    else:
-        return "No completions"
+    return _get_completions(obj, code)
 
 
 def get_help(obj):
@@ -391,11 +379,11 @@ def _import(obj, context='helper_globals'):
 
 if __name__ == "__main__":
     code = "import django\nimport django.contrib\nimport sys\na = django\ndef test(a):\n\tbar = a\n\tfoo = 2"
-#     print complete("djan", code)
-#     print complete("django.con", code)
-#     print complete("sys", code)
-#     print complete("a.", code)
-    print complete("di", code, [["","def","test",2313]], "\t")
+    print get_completions("djan", code)
+    print get_completions("tes", code)
+    # print complete("sys", code)
+    # print complete("a.", code)
+    print get_completions("di", code, [["","def","test",2313]], "\t")
 #     print get_signature("sys.path")
 #     print get_signature("dir")
 #     print get_signature("glob.glob(")
