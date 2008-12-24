@@ -284,7 +284,8 @@ completions are available it indents"
   (interactive)
   (let ((completions-list)
 	(parsed-completions)
-	(buffer (current-buffer)))
+	(buffer (current-buffer))
+	(completion))
     (setq completions-list (gpy-get-completions))
     (setq parsed-completions (gpy-parse-completions completions-list))
     (if (equal completions-list nil)
@@ -293,8 +294,11 @@ completions are available it indents"
 	  (gpy-show-completions parsed-completions))
       (progn
 	(gpy-show-completions parsed-completions)
-	(backward-kill-word 1)
-	(insert (gpy-find-equal-string-from-start completions-list))))))
+	(setq completion (gpy-find-equal-string-from-start completions-list))
+	(if (not (equal completion ""))
+	    (progn
+	      (backward-kill-word 1)
+	      (insert completion)))))))
 
 
 (defun gpy-refresh-and-dot ()
