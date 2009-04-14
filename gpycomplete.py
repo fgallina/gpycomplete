@@ -145,9 +145,9 @@ def refresh_context(code):
     message
     """
     if _exec_code(code):
-        return "This file contains no errors"
+        return True
     else:
-        return "This file contains errors"
+        return False
 
 
 def get_signature(obj):
@@ -381,15 +381,16 @@ if __name__ == "__main__":
     code = "import django\nimport django.contrib\nimport sys\na = django\ndef test(a):\n\tbar = a\n\tfoo = 2"
     print get_completions("djan", code)
     print get_completions("tes", code)
-    # print complete("sys", code)
-    # print complete("a.", code)
+    print get_completions("sys", code)
+    print get_completions("a.", code)
     print get_completions("di", code, [["","def","test",2313]], "\t")
-#     print get_signature("sys.path")
-#     print get_signature("dir")
-#     print get_signature("glob.glob(")
-#     print get_signature("_get_completions(")
-#     print get_help("django.contrib")
+    print get_signature("sys.path")
+    print get_signature("dir")
+    print get_signature("glob.glob(")
+    print get_signature("_get_completions(")
+    print get_help("django.contrib")
     print get_help("foo")
     print get_help("sys.path")
-#    print complete("fo", code, [["","def","test",2313]], "\t")
-#    print complete("fo", code, [["","def","test",234]],"\t")
+    print get_completions("fo", code, [["","def","test",2313]], "\t")
+    print get_completions("fo", code, [["","def","test",234]],"\t")
+

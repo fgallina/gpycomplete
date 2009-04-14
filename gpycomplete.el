@@ -44,6 +44,18 @@
   :group 'python)
 
 
+(defcustom gpy-file-contains-errors "This file contains errors!"
+  "Error to display when the file contains errors"
+  :type 'string
+  :group 'python)
+
+
+(defcustom gpy-file-contains-no-errors "This file contains NO errors!"
+  "Error to display when the file contains errors"
+  :type 'string
+  :group 'python)
+
+
 (defcustom gpy-max-completions 0
   "The number of completions to display, if 0 it means no limit"
   :type 'integer
@@ -188,7 +200,9 @@ returns 'cal'
 displays the result"
   (interactive)
   (gpy-show
-   (gpycomplete-refresh-context (gpy-get-code))))
+   (if (gpycomplete-refresh-context (gpy-get-code))
+       gpy-file-contains-no-errors
+     gpy-file-contains-errors)))
 
 
 (defun gpy-get-completions nil
@@ -276,7 +290,8 @@ should be shown on the *gpy-completions* buffer"
 	  parsed))
     gpy-no-completions-error))
 
-(defun gpy-complete-and-indent ()
+
+(defun gpy-complete-or-indent ()
   "If a set of completions is available for the previous
 expression prints the available completions, if only a single
 completion is available then it is insertered on the buffer. If no
@@ -337,7 +352,7 @@ settings file without the .py extension"
   (gpycomplete-set-django-project path settings-module))
 
 
-(define-key py-mode-map "\t" 'gpy-complete-and-indent)
+(define-key py-mode-map "\t" 'gpy-complete-or-indent)
 (define-key py-mode-map "(" 'gpy-electric-lparen)
 (define-key py-mode-map "," 'gpy-electric-comma)
 (define-key py-mode-map [f1] 'gpy-help-at-point)
