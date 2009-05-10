@@ -19,7 +19,7 @@ class MyClass(object):
     def another_def(self, arg1, arg2):
         print arg1 + arg2
 
-    class c():
+    class cla():
 
         def __init__(self):
             pass

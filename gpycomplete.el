@@ -45,13 +45,13 @@
 
 
 (defcustom gpy-file-contains-errors "This file contains errors!"
-  "Error to display when the file contains errors"
+  "Message to display when the file contains errors"
   :type 'string
   :group 'python)
 
 
 (defcustom gpy-file-contains-no-errors "This file contains NO errors!"
-  "Error to display when the file contains errors"
+  "Message to display when the file does not contains errors"
   :type 'string
   :group 'python)
 
@@ -69,7 +69,7 @@
 
 
 (defcustom gpy-completions-buffer-name "*gpy-completions*"
-  "Error to display when no completions available"
+  "Name of the buffer which will contain all the available completions"
   :type 'string
   :group 'python)
 
@@ -104,6 +104,7 @@
 
 
 (defun gpy-get-cursor-indentation ()
+  "Gets the indentation of the cursor in the current line"
   (save-excursion
     (re-search-backward "^\\( *\\)" nil t)
     (match-string-no-properties 1)))
@@ -132,7 +133,7 @@ An optional argument tells the function to search backwards"
 
 
 (defun gpy-get-subcontext ()
-  "Gets the current function or class where the user could be into"
+  "Gets the current function or class where the user is into"
   (interactive)
   (save-excursion
     (let ((symbol nil)
@@ -140,6 +141,11 @@ An optional argument tells the function to search backwards"
       (while (not (equal "" (nth 0 (setq symbol (gpy-get-nearest-definition t)))))
 	(setq list-of-definitions (cons symbol list-of-definitions)))
       (setq list-of-definitions (cons (gpy-get-nearest-definition) list-of-definitions)))))
+
+(defun gpy-get-subcontext-debug ()
+  "Gets the current function or class where the user is into"
+  (interactive)
+  (message (gpy-get-subcontext)))
 
 
 (defun gpy-find-shortest-word (words)
@@ -162,8 +168,7 @@ An optional argument tells the function to search backwards"
 with the beginning of all the words of the list.
 
 For example, given the list \('calefon' 'calabaza' 'caliente') it
-returns 'cal'
-"
+returns 'cal'"
   (let ((current-string (gpy-find-shortest-word words))
 	(matches-with-all nil)
 	(index 0)
@@ -312,8 +317,20 @@ completions are available it indents"
 	(setq completion (gpy-find-equal-string-from-start completions-list))
 	(if (not (equal completion ""))
 	    (progn
-	      (backward-kill-word 1)
-	      (insert completion)))))))
+              (save-restriction
+                (beginning-of-line)
+                (push-mark nil t)
+                (end-of-line)
+                (narrow-to-region (mark) (point))
+                (let ((end-point (point))
+                      (start-point 0))
+                  (if (search-backward "." nil t)
+                      (progn
+                        (forward-char)
+                        (setq start-point (point))
+                        (delete-region start-point end-point))
+                    (backward-kill-word 1))
+                  (insert completion)))))))))
 
 
 (defun gpy-refresh-and-dot ()

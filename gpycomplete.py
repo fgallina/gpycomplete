@@ -82,13 +82,12 @@ subprogram_globals = {}
 helper_globals = {}
 helper_globals_buffer = {}
 # FIXME - CONVERT SUBCONTEXT_GLOBALS IN A DICT
-subcontext_globals = []
+subcontext_globals = {}
 
 
 def get_completions(obj, code, subcontext="", cursor_indentation=""):
     """Returns the completions parsed as a string"""
-    _calculate_subcontext(subcontext, cursor_indentation)
-    return _get_completions(obj, code)
+    return _get_completions(obj, code, subcontext, cursor_indentation)
 
 
 def get_help(obj):
@@ -228,16 +227,22 @@ def _calculate_subcontext(subcontext, cursor_indentation):
                 code += subcontext[i][2] + "."
         code = code[:-1]
         obj = _eval_code(code)
-        context = []
+        context = {}
         if type(obj) == types.MethodType:
-            context = list(obj.im_func.func_code.co_varnames)
-            for item in dir(obj):
-                context.append(item)
+            variables = list(obj.im_func.func_code.co_varnames)
+            #for item in dir(obj):
+            for item in variables:
+                # context.append(item)
+                context[item] = types.ObjectType
         elif type(obj) == types.FunctionType:
-            context = list(obj.func_code.co_varnames)
+            variables = list(obj.func_code.co_varnames)
+            for item in variables:
+                # context.append(item)
+                context[item] = types.ObjectType
+        # subcontext_globals = context
         subcontext_globals = context
     else:
-        subcontext_globals = []
+        subcontext_globals = {}
     return code
 
 
@@ -251,14 +256,14 @@ def _get_context():
            subprogram_globals.keys() + \
            helper_globals.keys() + \
            BUILTIN_KEYS + \
-           subcontext_globals
+           subcontext_globals.keys()
     keys.sort()
     return keys
 
 
-def _get_completions(word, code):
+def _get_completions(word, code, subcontext, cursor_indentation):
     """gets the completions for word after evaluating code"""
-    global subprogram_globals
+    parsed_subcontext = _calculate_subcontext(subcontext, cursor_indentation)
     _exec_code(code)
     keys = _get_context()
     dots = word.split('.')
@@ -271,6 +276,10 @@ def _get_completions(word, code):
         # the global keys starting with the word
         return [i for i in keys if i.startswith(word)]
     else:
+        if word.startswith('self'):
+            dot_index = parsed_subcontext.rfind('.')
+            parsed_subcontext = parsed_subcontext[:dot_index]
+            word = word.replace('self', parsed_subcontext)
         # If word ends with a "." strip it and execute _get_dir
         if word.endswith('.'):
             module = _eval_code(word[:-1])
@@ -378,12 +387,27 @@ def _import(obj, context='helper_globals'):
 
 
 if __name__ == "__main__":
-    code = "import django\nimport django.contrib\nimport sys\na = django\ndef test(a):\n\tbar = a\n\tfoo = 2"
+    code = """import django\n
+import django.contrib\n
+import sys\n
+a = django\n
+def test(a):\n\t
+    bar = a\n\t
+    foo = 2\n
+class Test(object):\n\t
+    def __init__(self, arg1):\n\t
+        self._arg1 = arg1\n
+    def test(self, arg):\n\t
+        a = self._arg1
+
+"""
     print get_completions("djan", code)
     print get_completions("tes", code)
     print get_completions("sys", code)
     print get_completions("a.", code)
     print get_completions("di", code, [["","def","test",2313]], "\t")
+    print get_completions("Tes", code)
+    print get_completions("self.", code)
     print get_signature("sys.path")
     print get_signature("dir")
     print get_signature("glob.glob(")
@@ -393,4 +417,5 @@ if __name__ == "__main__":
     print get_help("sys.path")
     print get_completions("fo", code, [["","def","test",2313]], "\t")
     print get_completions("fo", code, [["","def","test",234]],"\t")
-
+    print subprogram_globals
+    print subcontext_globals
