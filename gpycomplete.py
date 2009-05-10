@@ -81,7 +81,6 @@ subprogram_globals_buffer = {}
 subprogram_globals = {}
 helper_globals = {}
 helper_globals_buffer = {}
-# FIXME - CONVERT SUBCONTEXT_GLOBALS IN A DICT
 subcontext_globals = {}
 
 

@@ -142,11 +142,6 @@ An optional argument tells the function to search backwards"
 	(setq list-of-definitions (cons symbol list-of-definitions)))
       (setq list-of-definitions (cons (gpy-get-nearest-definition) list-of-definitions)))))
 
-(defun gpy-get-subcontext-debug ()
-  "Gets the current function or class where the user is into"
-  (interactive)
-  (message (gpy-get-subcontext)))
-
 
 (defun gpy-find-shortest-word (words)
   "given a list of words it returns the shortest"
