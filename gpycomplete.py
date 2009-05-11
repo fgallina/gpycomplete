@@ -98,19 +98,16 @@ def get_help(obj):
         obj = obj[:paren]
     if obj.endswith("(") or obj.endswith("."):
         obj = obj[:-1]
-    out = "no help string for " + obj
     found = False
+    pobj = None
     context = 'subprogram_globals'
     if not obj in _get_context():
         context = 'helper_globals'
         found = _import(obj, context)
-    else:
-        found = True
-    if obj not in subcontext_globals and \
-       found == True:
-        obj = _eval_code(obj, context)
-    else:
-        return out
+    if obj not in subcontext_globals and found:
+        pobj = _eval_code(obj, context)
+    if not pobj:
+        return "no help string for " + obj
     stdout = sys.stdout
     out = StringIO.StringIO()
     try:
@@ -262,6 +259,7 @@ def _get_context():
 
 def _get_completions(word, code, subcontext, cursor_indentation):
     """gets the completions for word after evaluating code"""
+    global subprogram_globals
     parsed_subcontext = _calculate_subcontext(subcontext, cursor_indentation)
     _exec_code(code)
     keys = _get_context()
@@ -352,18 +350,13 @@ def _exec_code(code, context='subprogram_globals_buffer'):
 def _eval_code(code, context='subprogram_globals'):
     """Evals code in the given context"""
     global subprogram_globals
-    global subprogram_globals_buffer
     global helper_globals
     obj = None
     try:
         if context == 'subprogram_globals':
             obj = eval(code, subprogram_globals)
-        elif context == 'subprogram_globals_buffer':
-            obj = eval(code, subprogram_globals_buffer)
         elif context == 'helper_globals':
             obj = eval(code, helper_globals)
-        elif context == 'helper_globals_buffer':
-            obj = eval(code, helper_globals_buffer)
     except:
         obj = None
     return obj

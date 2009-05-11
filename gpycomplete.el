@@ -258,10 +258,8 @@ is typed and inserts ,"
     (set-buffer gpy-completions-buffer-name)
     (erase-buffer)
     (insert string)
-    (mark-whole-buffer)
     (set-fill-column gpy-completions-fill-column)
-    (fill-region (point-min) (point-max))
-    (message (buffer-substring (point-min) (point-max)))
+    (message (buffer-string))
     (set-buffer buffer)))
 
 
@@ -297,20 +295,20 @@ completion is available then it is insertered on the buffer. If no
 completions are available it indents"
   (interactive)
   (let ((completions-list)
-	(parsed-completions)
-	(buffer (current-buffer))
-	(completion))
+        (parsed-completions)
+        (buffer (current-buffer))
+        (completion))
     (setq completions-list (gpy-get-completions))
     (setq parsed-completions (gpy-parse-completions completions-list))
     (if (equal completions-list nil)
-	(progn
-	  (indent-for-tab-command)
-	  (gpy-show-completions parsed-completions))
+        (progn
+          (indent-for-tab-command)
+          (gpy-show-completions parsed-completions))
       (progn
-	(gpy-show-completions parsed-completions)
-	(setq completion (gpy-find-equal-string-from-start completions-list))
-	(if (not (equal completion ""))
-	    (progn
+        (gpy-show-completions parsed-completions)
+        (setq completion (gpy-find-equal-string-from-start completions-list))
+        (if (not (equal completion ""))
+            (progn
               (save-restriction
                 (beginning-of-line)
                 (push-mark nil t)
