@@ -8,7 +8,7 @@ This package contains gpycomplete.
    Wiki: http://github.com/fgallina/gpycomplete/wikis
    Screencast: http://blip.tv/file/1559227/
    My Blog: http://www.caffeinegroup.com.ar
-   Latest release: http://github.com/fgallina/gpycomplete/tree/0.2
+   Downloads page: http://github.com/fgallina/gpycomplete/downloads
 
 1. Introduction
 
@@ -24,7 +24,6 @@ This package contains gpycomplete.
    are actually what the python interpreter running in the background
    has available in its context. This is what makes gpycomplete so
    powerful and what it gives the feel of ipython.
-
 
 2. Requirements
 
@@ -58,7 +57,6 @@ This package contains gpycomplete.
    (require 'gpycomplete)
 
    Restart Emacs or use load-file ~/.emacs.
-
 
 4. Usage
 
@@ -98,12 +96,10 @@ This package contains gpycomplete.
    documentation of them by using C-h f <name of the function> within
    Emacs
 
-
 5. Bug Reports
 
    If you find a bug please report it to:
    fgallina at caffeinegroup dot com dot ar
-
 
 6. License
 

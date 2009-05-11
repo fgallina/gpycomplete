@@ -25,7 +25,6 @@
 
 (pymacs-load "gpycomplete")
 
-
 (defgroup python nil
   "Inline autocompletion for the python language"
   :group 'languages
