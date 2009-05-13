@@ -94,7 +94,7 @@
       (end-of-line)
       (narrow-to-region (mark) (point)))
     (save-excursion
-      (if (search-backward " " nil t)
+      (if (re-search-backward  ",\\|(\\| " nil t)
 	  (forward-char)
 	(beginning-of-line))
       (push-mark nil t)

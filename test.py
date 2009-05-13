@@ -1,6 +1,5 @@
 import sys
 
-
 class MyClass(object):
     """This is a test class
     """
@@ -23,7 +22,6 @@ class MyClass(object):
 
         def __init__(self):
             pass
-
 
 def a_great_def(arg):
     """This is the best function of the world"""
