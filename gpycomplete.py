@@ -23,10 +23,10 @@
 import sys
 import types
 import inspect
-import StringIO
 import os
 import re
 import glob
+import pydoc
 
 BUILTIN_KEYS = ['ArithmeticError', 'AssertionError', 'AttributeError',
                 'BaseException', 'DeprecationWarning', 'EOFError',
@@ -63,8 +63,8 @@ BUILTIN_KEYS = ['ArithmeticError', 'AssertionError', 'AttributeError',
 
 PROTECTED_ITEMS = ["__builtins__", "__name__", "__doc__", "__file__",
                    # imports
-                   "sys", "types", "inspect", "StringIO", "os","re",
-                   "glob", "lisp",
+                   "sys", "types", "inspect", "os","re",
+                   "glob", "lisp", "pydoc",
                    # global variables and constants
                    "BUILTIN_KEYS", "PROTECTED_ITEMS",
                    "subprogram_globals_buffer", "subprogram_globals",
@@ -86,6 +86,7 @@ subcontext_globals = {}
 
 def get_completions(obj, code, subcontext="", cursor_indentation=""):
     """Returns the completions parsed as a string"""
+
     return _get_completions(obj, code, subcontext, cursor_indentation)
 
 
@@ -93,6 +94,7 @@ def get_help(obj):
     """Returns the help of the given object.
     Inspired in the original pycomplete package
     """
+
     paren = obj.rfind("(")
     if paren != -1:
         obj = obj[:paren]
@@ -108,18 +110,13 @@ def get_help(obj):
         pobj = _eval_code(obj, context)
     if not pobj:
         return "no help string for " + obj
-    stdout = sys.stdout
-    out = StringIO.StringIO()
-    try:
-        sys.stdout = out
-        help(obj)
-    finally:
-        sys.stdout = stdout
-    return out.getvalue()
+    obj = _eval_code(obj)
+    return pydoc.getdoc(obj)
 
 
 def add_path(path):
     """Adds a path to the pythonpath and returns the path"""
+
     sys.path.append(path)
     return path
 
@@ -129,6 +126,7 @@ def set_django_project(path, settings='settings'):
     DJANGO_SETTINGS_MODULE environment variable to the value specified
     in the settings param
     """
+
     sys.path.append(path)
     os.environ['DJANGO_SETTINGS_MODULE'] = settings
     return "Path: " + path + " // Settings: " + settings
@@ -139,6 +137,7 @@ def refresh_context(code):
     executes sucessfully returns a sucess message else a failure
     message
     """
+
     if _exec_code(code):
         return True
     else:
@@ -149,6 +148,7 @@ def get_signature(obj):
     """Returns the signature of the given object.
     Inspired in the original pycomplete package
     """
+
     # FIXME - make this function less ugly
     paren = obj.find("(")
     if paren != -1:
@@ -157,11 +157,11 @@ def get_signature(obj):
     if not obj in _get_context():
         context = 'helper_globals'
         if not _import(obj, context):
-            return "no signature for" + obj
+            return "no signature for " + obj
     try:
         obj = _eval_code(obj, context)
     except:
-        return "no signature for" + obj
+        return "no signature for " + obj
     sig = ""
     # This part is extracted from the pycomplete.py file
     if type(obj) in (types.ClassType, types.TypeType):
@@ -190,6 +190,7 @@ def get_path(position, code):
     - `position`: the position of the pointer
     - `code`: the code to check
     """
+
     return str(position)
 
 
@@ -207,11 +208,14 @@ def _find_constructor(class_ob):
 
 
 def _calculate_subcontext(subcontext, cursor_indentation):
+    """ Calculates the subcontext taking into account the cursor
+    position
+    """
+
     # 0: indentation
     # 1: type (def or class)
     # 2: name
     # 3: point
-    # FIXME - get complete subcontext for classes and methods
     global subcontext_globals
     code = ""
     if subcontext and subcontext[len(subcontext)-1][0] < cursor_indentation:
@@ -244,6 +248,7 @@ def _calculate_subcontext(subcontext, cursor_indentation):
 
 def _get_context():
     """returns a list with all the keywords which are in the global scope"""
+
     global BUILTIN_KEYS
     global helper_globals
     global subcontext_globals
@@ -259,6 +264,7 @@ def _get_context():
 
 def _get_completions(word, code, subcontext, cursor_indentation):
     """gets the completions for word after evaluating code"""
+
     global subprogram_globals
     parsed_subcontext = _calculate_subcontext(subcontext, cursor_indentation)
     _exec_code(code)
@@ -300,6 +306,7 @@ def _get_completions(word, code, subcontext, cursor_indentation):
 
 def _get_dir(obj):
     """Returns the attributes for a given object"""
+
     try:
         path = obj.__path__
     except:
@@ -319,8 +326,10 @@ def _get_dir(obj):
 
 
 def _exec_code(code, context='subprogram_globals_buffer'):
-    """Executes code in a sure way in the subprogram_globals dict
+    """Executes code in a safe way in the subprogram_globals /
+    helper_globals dict
     """
+
     global subprogram_globals_buffer
     global subprogram_globals
     global helper_globals_buffer
@@ -349,6 +358,7 @@ def _exec_code(code, context='subprogram_globals_buffer'):
 
 def _eval_code(code, context='subprogram_globals'):
     """Evals code in the given context"""
+
     global subprogram_globals
     global helper_globals
     obj = None
@@ -363,6 +373,8 @@ def _eval_code(code, context='subprogram_globals'):
 
 
 def _import(obj, context='helper_globals'):
+    """Safe import of modules in the appropiate context"""
+
     dot = obj.rfind('.')
     if dot != -1:
        pobj = obj[:dot]
@@ -379,23 +391,28 @@ def _import(obj, context='helper_globals'):
 
 
 if __name__ == "__main__":
-    code = """import django\n
-import django.contrib\n
+
+    code = """
+import os\n
 import sys\n
-a = django\n
-def test(a):\n\t
+
+def function(a, b=1):\n\t
     bar = a\n\t
     foo = 2\n
-class Test(object):\n\t
-    def __init__(self, arg1):\n\t
-        self._arg1 = arg1\n
-    def test(self, arg):\n\t
-        a = self._arg1
 
+class Class(object):\n\t
+
+    def __init__(self, arg1, arg2=1):\n\t
+        self.arg1 = arg1\n
+        self.arg2 = arg2\n
+
+    def test(self, append):\n\t
+        print self.arg1 + append
 """
     print get_completions("djan", code)
     print get_completions("tes", code)
     print get_completions("sys", code)
+    print get_completions("sys.", code)
     print get_completions("a.", code)
     print get_completions("di", code, [["","def","test",2313]], "\t")
     print get_completions("Tes", code)
@@ -403,6 +420,7 @@ class Test(object):\n\t
     print get_signature("sys.path")
     print get_signature("dir")
     print get_signature("glob.glob(")
+    print get_signature("test")
     print get_signature("_get_completions(")
     print get_help("django.contrib")
     print get_help("foo")
