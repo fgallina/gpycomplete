@@ -36,13 +36,8 @@ This package contains gpycomplete.
    You can download Pymacs 0.23 from:
    http://pymacs.progiciels-bpi.ca/archives/Pymacs-0.23.tar.gz
 
-   Also you will need python mode, this is because the keystrokes of
-   gpycomplete are mapped into py-mode-map so they are only available
-   when editing a python file. You can download python-mode.el from:
-   https://launchpad.net/python-mode/+download
-
    Regarding the version of Emacs, this package was tested successfully
-   with 22.1 and 23.0.60
+   with Emacs 23
 
 3. Installation
 
