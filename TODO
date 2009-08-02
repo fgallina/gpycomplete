@@ -2,3 +2,4 @@
 * Cleanup code (even more) and review documentation strings
 * Modularize gpycomplete by addind specialized modules for each task
 * Enhance the way subcontext completion is handled
+* Modify README file to match the features/requirements/installation instructions
