@@ -21,9 +21,26 @@
 ;; programing language within GNU/Emacs
 
 (require 'pymacs)
-(require 'python-mode)
-
 (pymacs-load "gpycomplete")
+
+
+(defvar gpy-mode-map
+  (let ((gpy-mode-map (make-sparse-keymap)))
+    (define-key gpy-mode-map "\t" 'gpy-complete-or-indent)
+    (define-key gpy-mode-map "(" 'gpy-electric-lparen)
+    (define-key gpy-mode-map "," 'gpy-electric-comma)
+    (define-key gpy-mode-map [f1] 'gpy-help-at-point)
+    (define-key gpy-mode-map [f2] 'gpy-signature)
+    (define-key gpy-mode-map [f3] 'gpy-help)
+    (define-key gpy-mode-map "." 'gpy-refresh-and-dot)
+    (define-key gpy-mode-map [return] 'gpy-refresh-and-newline)
+    gpy-mode-map)
+  "Keymaps for gpycomplete")
+
+
+(defvar gpy-mode-hook nil
+  "Hooks to run when gpycomplete is initialized")
+
 
 (defgroup python nil
   "Inline autocompletion for the python language"
@@ -361,34 +378,40 @@ settings file without the .py extension"
   (gpycomplete-set-django-project path settings-module))
 
 
-(define-key py-mode-map "\t" 'gpy-complete-or-indent)
-(define-key py-mode-map "(" 'gpy-electric-lparen)
-(define-key py-mode-map "," 'gpy-electric-comma)
-(define-key py-mode-map [f1] 'gpy-help-at-point)
-(define-key py-mode-map [f2] 'gpy-signature)
-(define-key py-mode-map [f3] 'gpy-help)
-(define-key py-mode-map "." 'gpy-refresh-and-dot)
-(define-key py-mode-map [return] 'gpy-refresh-and-newline)
+(defun gpy-context-refresh-hook ()
+  (if (string-match "\\.py$" (buffer-file-name))
+      (progn
+        (pymacs-load "gpycomplete")
+        (gpy-refresh-context))))
 
 
-;; This hook reloads the gpycomplete python package and refresh the
-;; context when a python file is opened
-(add-hook 'find-file-hook
-	  (lambda ()
-	    (if (string-match "\\.py$" (buffer-file-name))
-		(progn
-		  (pymacs-load "gpycomplete")
-		  (gpy-refresh-context))))
-	  t)
+(defun gpy-enable ()
+  "This function initializes the minor mode"
 
-;; This hook reloads the gpycomplete python package and refresh the
-;; context when a python file is saved
-(add-hook 'after-save-hook
-	  (lambda ()
-	    (if (string-match "\\.py$" (buffer-file-name))
-		(progn
-		  (pymacs-load "gpycomplete")
-		  (gpy-refresh-context))))
-	  t)
+  ;; This hook reloads the gpycomplete python package and refresh the
+  ;; context when a python file is opened
+  (add-hook 'find-file-hook 'gpy-context-refresh-hook t)
+
+  ;; This hook reloads the gpycomplete python package and refresh the
+  ;; context when a python file is saved
+  (add-hook 'after-save-hook 'gpy-context-refresh-hook t)
+
+  ;; Enable the keymap
+  (push (cons 'gpycomplete-mode gpy-mode-map) minor-mode-map-alist)
+
+  ;; Run all user defined hooks
+  (run-hooks 'gpy-mode-hook))
+
+
+(defun gpy-disable ()
+  "This function takes care to disable the minor mode")
+
+;;;###autoload
+(define-minor-mode gpycomplete-mode
+  "Enables gpycomplete autocompletion minor-mode"
+  :lighter " gpycomplete" :group 'convenience
+  (if gpycomplete-mode
+      (gpy-enable)
+    (gpy-disable)))
 
 (provide 'gpycomplete)
