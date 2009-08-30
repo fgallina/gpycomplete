@@ -21,7 +21,7 @@
 ;; programing language within GNU/Emacs
 
 (require 'pymacs)
-(pymacs-load "gpycomplete")
+(pymacs-load "gpycomplete.gpycomplete" "gpycomplete-")
 
 
 (defvar gpy-mode-map
