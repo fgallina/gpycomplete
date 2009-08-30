@@ -21,7 +21,7 @@
 # programing language within GNU/Emacs
 import complete
 import context
-import helps
+import helpers
 import django
 
 def refresh_context(code):
@@ -31,10 +31,10 @@ def get_completions(obj, code, subcontext="", cursor_indentation=""):
     return complete.get_completions(obj, code, subcontext, cursor_indentation)
 
 def get_help(obj):
-    return helps.get_help(obj)
+    return helpers.get_help(obj)
 
 def get_signature(obj):
-    return helps.get_signature(obj)
+    return helpers.get_signature(obj)
 
 def refresh_context(code):
     return context.refresh_context(code)
@@ -76,6 +76,6 @@ class Class(object):\n\t
     print get_signature("function(")
     print get_signature("glob.glob")
     print ''
-    print 'helps'
+    print 'helpers'
     print get_help("help")
     print get_help("os.path")
