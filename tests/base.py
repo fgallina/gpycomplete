@@ -1,4 +1,4 @@
-import gpycomplete
+from gpycomplete import *
 import unittest
 
 code = """
@@ -25,4 +25,4 @@ c = Class(1, 2)
 class BaseTestCase(unittest.TestCase):
 
     def setUp(self):
-        gpycomplete._exec_code(code)
+        context.exec_code(code)

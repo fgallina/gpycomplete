@@ -1,5 +1,5 @@
 import unittest
-import gpycomplete
+from gpycomplete import *
 from base import *
 import sys, os
 
@@ -26,26 +26,26 @@ class_obj = Class(1, 2)
 class CompletionsTestCase(BaseTestCase):
 
     def testSameWordCompletion(self):
-        self.assertEquals(gpycomplete.get_completions('sys', code), ['sys'])
-        self.assertEquals(gpycomplete.get_completions('os', code), ['os'])
+        self.assertEquals(main.get_completions('sys', code), ['sys'])
+        self.assertEquals(main.get_completions('os', code), ['os'])
 
     def testNoCompletion(self):
-        self.assertEquals(gpycomplete.get_completions('asdf', code), [])
-        self.assertEquals(gpycomplete.get_completions('asdf.', code), [])
+        self.assertEquals(main.get_completions('asdf', code), [])
+        self.assertEquals(main.get_completions('asdf.', code), [])
 
     def testImportCompletion(self):
-        self.assertEquals(gpycomplete.get_completions('sys.', code), gpycomplete._get_dir(sys))
-        self.assertEquals(gpycomplete.get_completions('os.', code), gpycomplete._get_dir(os))
-        self.assertEquals(gpycomplete.get_completions('sys.path', code), ['path', 'path_hooks', 'path_importer_cache'])
-        self.assertEquals(gpycomplete.get_completions('os.de', code), ['defpath', 'devnull'])
+        self.assertEquals(main.get_completions('sys.', code), complete.get_dir(sys))
+        self.assertEquals(main.get_completions('os.', code), complete.get_dir(os))
+        self.assertEquals(main.get_completions('sys.path', code), ['path', 'path_hooks', 'path_importer_cache'])
+        self.assertEquals(main.get_completions('os.de', code), ['defpath', 'devnull'])
 
     def testGlobalNameCompletion(self):
-        self.assertEquals(gpycomplete.get_completions('functi', code), ['function'])
-        self.assertEquals(gpycomplete.get_completions('Cla', code), ['Class'])
+        self.assertEquals(main.get_completions('functi', code), ['function'])
+        self.assertEquals(main.get_completions('Cla', code), ['Class'])
 
     def testLocalNameCompletion(self):
-        self.assertEquals(gpycomplete.get_completions('fo', code, [["", 'def', 'function']], '\t'), ['foo'])
-        self.assertEquals(gpycomplete.get_completions('__ini', code, [["", 'class', 'Class']], '\t'), ['__init__'])
+        self.assertEquals(main.get_completions('fo', code, [["", 'def', 'function']], '\t'), ['foo'])
+        self.assertEquals(main.get_completions('__ini', code, [["", 'class', 'Class']], '\t'), ['__init__'])
 
 
 if __name__=='__main__':
