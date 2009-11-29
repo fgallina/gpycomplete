@@ -3,6 +3,7 @@ import types
 import inspect
 import context
 
+
 def get_signature(obj):
     """Returns the signature of the given object.
     Inspired in the original pycomplete package
@@ -20,7 +21,6 @@ def get_signature(obj):
         obj = context.eval_code(obj, context_dict)
     except:
         return "no signature for " + obj
-    print "yesy"
     sig = ""
     # This part is extracted from the pycomplete.py file
     if type(obj) in (types.ClassType, types.TypeType):
@@ -72,14 +72,9 @@ def get_help(obj):
         found = context.cimport(obj, context_dict)
     else:
         pobj = context.eval_code(obj)
-        print pobj
     if obj not in context.subcontext_globals and found:
         pobj = context.eval_code(obj, context_dict)
     if not pobj:
         return "no help string for " + obj
     obj = context.eval_code(obj)
     return pydoc.getdoc(obj)
-
-if __name__=='__main__':
-    print context.exec_code('import glob')
-    print get_help('glob')
