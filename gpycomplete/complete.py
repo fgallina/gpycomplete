@@ -10,14 +10,14 @@ def get_completions(word, code, subcontext, cursor_indentation):
     context.exec_code(code)
     keys = context.get_context()
     dots = word.split('.')
-    # If it is a not completable python expression return an empty list
+    # If it is a not completable python expression completions = an empty list
     pattern = "^[A-Za-z_][A-Za-z_0-9]*([.][A-Za-z_][A-Za-z_0-9]*)*\.?$"
     if not re.match(pattern, word):
-        return []
+        completions = []
     elif word.rfind('.') == -1:
-        # If the word is a simple statement not containing "." return
+        # If the word is a simple statement not containing "." completions =
         # the global keys starting with the word
-        return [i for i in keys if i.startswith(word)]
+        completions = [i for i in keys if i.startswith(word)]
     else:
         if word.startswith('self'):
             dot_index = parsed_subcontext.rfind('.')
@@ -27,9 +27,9 @@ def get_completions(word, code, subcontext, cursor_indentation):
         if word.endswith('.'):
             module = context.eval_code(word[:-1])
             if module:
-                return get_dir(module)
+                completions = get_dir(module)
             else:
-                return []
+                completions = []
         else:
             # If word does not ends with "." but it contains a dot
             # then eval word up to ".", split the remaining part, get
@@ -39,10 +39,10 @@ def get_completions(word, code, subcontext, cursor_indentation):
             module = context.eval_code(word[:dot_index])
             if module:
                 mword = word[dot_index+1:]
-                return [i for i in get_dir(module) if i.startswith(mword)]
+                completions = [i for i in get_dir(module) if i.startswith(mword)]
             else:
-                return []
-
+                completions = []
+    return sorted(list(set(completions)))
 
 def get_dir(obj):
     """Returns the attributes for a given object"""
@@ -60,5 +60,4 @@ def get_dir(obj):
                 if os.path.isdir(fullname) and \
                    glob.glob(os.path.join(fullname, '__init__.py*')):
                     attributes.append(subdir)
-    attributes.sort()
-    return attributes
+    return sorted(list(set(attributes)))
