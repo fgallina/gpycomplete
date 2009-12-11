@@ -16,22 +16,21 @@ This package contains gpycomplete.
    GNU/Emacs. It feels like having ipython in your buffer.
 
    gpycomplete is written from scratch by Fabián E. Gallina, althought
-   some funcions (namely get_help and get_signature) are strongly
+   some functions (namely get_help and get_signature) are strongly
    inspired in the original pycomplete package that was available at
    http://python-mode.sf.net.
 
    The main feature of gpycomplete is that the completions it returns
    are actually what the python interpreter running in the background
    has available in its context. This is what makes gpycomplete so
-   powerful and what it gives the feel of ipython.
+   powerful and what it gives the feel of using ipython.
 
 2. Requirements
 
-   To use gpycomplete you must have Pymacs. The recommended version is
-   the latest stable release 0.23 (since this package was sucessfully
-   tested with that version). If you run this package with a different
-   version please let me know at:
-   fgallina at caffeinegroup dot com dot ar
+   To use gpycomplete you must have Pymacs. This package was tested
+   sucessfully with 0.23 and 0.24b. If you run this package with a
+   different version please let me know at the email listed in the top
+   of the file.
 
    You can download Pymacs 0.23 from:
    http://pymacs.progiciels-bpi.ca/archives/Pymacs-0.23.tar.gz
@@ -41,17 +40,22 @@ This package contains gpycomplete.
 
 3. Installation
 
-   To install gpycomplete just put gpycomplete.el in a directory which
-   is included in your Emacs load-path and put gpycomplete.py in some
-   folder included in your python path (normally /usr/lib/python2.5/
-   is OK)
+   To install gpycomplete just put gpycomplete.el in a directory
+   included in your Emacs load-path and put the gpycomplete folder in
+   your site-packages or if you like you can specify an specific path
+   where gpycomplete is located by doing something like this:
 
-   After putting the files in their appropiate directories just add
-   the following to your ~/.emacs file:
+   (require 'pymacs)
+   (setq pymacs-load-path
+            (append pymacs-load-path '("/path-to/gpycomplete")))
+   (require 'gpycomplete)
+
+   In the case you included gpycomplete in the site-packages folder
+   you will only need to add this in your .emacs:
 
    (require 'gpycomplete)
 
-   Restart Emacs or use load-file ~/.emacs.
+   Finally, restart Emacs or use load-file ~/.emacs.
 
 4. Usage
 
@@ -93,8 +97,8 @@ This package contains gpycomplete.
 
 5. Bug Reports
 
-   If you find a bug please report it to:
-   fabian at gnu dot org dot ar
+   If you find a bug please report it sending an email listed in the
+   top of the file.
 
 6. License
 

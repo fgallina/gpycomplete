@@ -14,8 +14,8 @@
 ;; along with gpycomplete.  If not, see <http://www.gnu.org/licenses/>.
 
 ;; gpycomplete.el is written from scratch by Fabian Ezequiel Gallina
-;; <fgallina at caffeinegroup dot com dot ar> but it is somehow based on
-;; the original pycomplete package from the http://python-mode.sf.net.
+;; <fgallina at gnu dot org dot ar> but it is somehow based on the
+;; original pycomplete package from the http://python-mode.sf.net.
 
 ;; gpycomplete allows inline completion and help for the python
 ;; programing language within GNU/Emacs
