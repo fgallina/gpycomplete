@@ -43,7 +43,7 @@ def set_path(path):
     return context.set_path(path)
 
 def set_django_project(path, settings='settings'):
-    return django.set_project(path, settings_module)
+    return django.set_project(path, settings)
 
 if __name__ == "__main__":
 

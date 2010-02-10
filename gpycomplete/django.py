@@ -19,6 +19,7 @@
 
 # gpycomplete allows inline completion and help for the python
 # programing language within GNU/Emacs
+import os
 import sys
 
 def set_project(path, settings='settings'):
