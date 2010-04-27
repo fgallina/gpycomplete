@@ -93,7 +93,7 @@
 (defun gpy-reload ()
   "Reinitializes gpy, this is just a debug helper"
   (interactive)
-  (load-file "~/.emacs.d/gpycomplete.el")
+  (load-library "gpycomplete")
   (pymacs-load "gpycomplete"))
 
 
