@@ -26,7 +26,7 @@
 
 (defvar gpy-mode-map
   (let ((gpy-mode-map (make-sparse-keymap)))
-    (define-key gpy-mode-map "\t" 'gpy-complete-or-indent)
+    (define-key gpy-mode-map [remap indent-for-tab-command] 'gpy-complete-or-indent)
     (define-key gpy-mode-map "(" 'gpy-electric-lparen)
     (define-key gpy-mode-map "," 'gpy-electric-comma)
     (define-key gpy-mode-map [f1] 'gpy-help-at-point)
